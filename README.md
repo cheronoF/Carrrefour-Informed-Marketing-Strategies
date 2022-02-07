@@ -1,0 +1,2 @@
+# WK14_IP
+Data Science Core WK 14 INDEPENDENT PROJECT
