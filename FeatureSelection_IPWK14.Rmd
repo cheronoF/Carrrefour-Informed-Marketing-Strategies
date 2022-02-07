@@ -1,0 +1,274 @@
+---
+title: "Feauture Selection"
+author: "Faith Rotich"
+date: "2/4/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+# Wk 14 IP - FEATURE SELECTION
+
+1. DEFINING THE QUESTION 
+2. METRICS OF SUCCESS 
+3. EXPERIMENTAL DESIGN 
+4. IMPLEMENTING THE SOLUTION 
+5. CHALLENING THE SOLUTION 
+6. CONCLUSION AND RECOMMENDATION 
+
+1. DEFING THE QUESTION 
+
+a) Problem Statement 
+
+You are a Data analyst at Carrefour Kenya and are currently undertaking a project that will inform the marketing department on the most relevant marketing strategies that will result in the highest no. of sales (total price including tax). Your project has been divided into four parts where you'll explore a recent marketing dataset by performing various unsupervised learning techniques and later providing recommendations based on your insights.
+
+Part 2: Feature Selection
+
+This section requires you to perform feature selection through the use of the unsupervised learning methods learned earlier this week. You will be required to perform your analysis and provide insights on the features that contribute the most information to the dataset.
+
+2. METRICS OF SUCCESS 
+
+- Successfully carrying out feature selection using unsupervised learning algorithms 
+
+```{r}
+# Reading the data 
+# data <- fread("http://bit.ly/CarreFourDataset")
+
+```
+
+
+```{r}
+# Loading the caret library
+
+library(caret)
+library(corrplot)
+library(data.table)
+library(tidyverse)
+
+```
+
+```{r}
+# Viewing the first 5 rows 
+head(data)
+
+```
+
+
+```{r}
+# Viewing the last 5 rows 
+tail(data)
+
+```
+
+
+```{r}
+# Viewing the size of the data 
+dim(data)
+
+```
+
+
+```{r}
+# Statistical Summary 
+#summary(data)
+```
+
+```{r}
+# Checking data types 
+sapply(data, class)
+
+```
+
+
+
+DATA CLEANING
+```{r}
+# Checking for missing values 
+
+# colSums(is.na(data))
+
+```
+There are no missing values in the data
+
+
+```{R}
+#Checking for Duplicates
+duplicated_rows <- data[duplicated(data),]
+
+duplicated_rows 
+
+```
+There are no duplicated rows
+
+``` {r}
+# showing these unique items and assigning to a variable unique_items below
+unique_items <- data[!duplicated(data), ]
+unique_items
+```
+
+```{r}
+# selecting the numerical data columns
+df <- data %>% select_if(is.numeric)
+
+
+# selecting needed columns
+df1 <- subset(df, select = c("Unit price", "Quantity", "Tax", "cogs", "gross income", "Rating", "Total"))
+colnames(df1)
+```
+
+# Feature Selection in Unsupervised Learning
+## Using filter methods
+
+```{R}
+#loading lbraries
+
+library(caret)
+library(corrplot)
+colnames(df1)
+
+```
+
+```{R}
+# Calculating the correlation matrix
+correlationMatrix <- cor(df1)
+
+
+# Find attributes that are highly correlated
+highlyCorrelated <- findCorrelation(correlationMatrix, cutoff=0.75)
+highlyCorrelated
+
+
+```
+Columns 4,7 and 3 are highly correlated
+
+
+```{R}
+# Removing Redundant Features 
+df2<-df1[-highlyCorrelated]
+```
+
+
+
+```{R}
+# Performing our graphical comparison
+par(mfrow = c(1, 2))
+corrplot(correlationMatrix, order = "hclust")
+corrplot(cor(df2), order = "hclust")
+```
+
+
+## Using Feature Ranking
+```{R}
+
+library(FSelector)
+colnames(df1)
+
+```
+
+
+
+```{R}
+Scores <- linear.correlation(Unit_price~., df1)
+Scores
+```
+
+```{R}
+#
+Subset <- cutoff.k(Scores, 5)
+as.data.frame(Subset)
+```
+
+```{R}
+Subset2 <-cutoff.k.percent(Scores, 0.4)
+as.data.frame(Subset2)
+```
+
+```{R}
+# Instead of using the scores for the correlation coefficient, 
+# we can use an entropy - based approach as shown below;
+# ---
+# 
+Scores2 <- information.gain(Unit_price~., df2)
+# Choosing Variables by cutoffSubset <- cutoff.k(Scores2, 5)
+Subset3 <- cutoff.k(Scores2, 5)
+as.data.frame(Subset3)
+```
+
+
+
+
+
+## using Wrapper Methods
+```{R}
+# Installing and loading our clustvarsel package
+suppressWarnings(
+    suppressMessages(if
+                     (!require(clustvarsel, quietly=TRUE))
+        install.packages("clustvarsel")))
+library(clustvarsel)
+```
+
+```{R}
+# Installing and loading our mclust package
+# ---
+# 
+suppressWarnings(
+    suppressMessages(if
+                     (!require(mclust, quietly=TRUE))
+        install.packages("mclust")))
+library(mclust)
+```
+
+```{R}
+# Sequential forward greedy search (default)
+out = clustvarsel(df, G = 1:5)
+out
+```
+
+```{R}
+# building the clustering model:
+Subset1 = df2[,out$subset]
+mod = Mclust(Subset1, G = 1:5)
+summary(mod)
+#
+plot(mod,c("classification"))
+```
+
+```{R}
+plot(mod,c("classification"))
+```
+
+## Using Embedded Methods
+```{R}
+library(wskm)
+df4 <- df[,apply(df2, 2, var, na.rm=TRUE) != 0]
+df4=prcomp(df4)
+model <- ewkm(df2[1:4], 3, lambda=2, maxiter=1000)
+```
+
+```{R}
+# Cluster Plot against 1st 2 principal components
+library("cluster")
+clusplot(df2[1:4], model$cluster, color=TRUE, shade=TRUE,
+         labels=2, lines=3,main='Cluster Analysis for Iris')
+```
+
+```{R}
+#checking weights
+round(model$weights*100,2)
+```{r}
+
+
+```
+
+Conclusions 
+
+
