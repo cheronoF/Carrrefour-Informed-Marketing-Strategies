@@ -1,0 +1,192 @@
+---
+title: "Dimensionality Reduction_Wk14"
+author: "Faith Rotich"
+date: "2/4/2022"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+# knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+# Wk 14 IP DIMESIONALITY REDUCTION
+
+1. DEFINING THE QUESTION 
+2. METRICS OF SUCCESS 
+3. EXPERIMENTAL DESIGN 
+4. IMPLEMENTING THE SOLUTION 
+5. CHALLENING THE SOLUTION 
+6. CONCLUSION AND RECOMMENDATION 
+
+1. DEFING THE QUESTION 
+
+a) Problem Statement 
+
+You are a Data analyst at Carrefour Kenya and are currently undertaking a project that will inform the marketing department on the most relevant marketing strategies that will result in the highest no. of sales (total price including tax). Your project has been divided into four parts where you'll explore a recent marketing dataset by performing various unsupervised learning techniques and later providing recommendations based on your insights.
+
+Part 1: Dimensionality Reduction
+
+This section of the project entails reducing your dataset to a low dimensional dataset using the t-SNE algorithm or PCA. You will be required to perform your analysis and provide insights gained from your analysis.
+
+2. METRICS OF SUCCESS 
+
+- Successfully using PCA to implement dimensionality reduction 
+
+3. EXPERIMENTAL DESIGN 
+
+Data Source Link - http://bit.ly/CarreFourDataset
+Checking the Data 
+Data Relevance
+Perform Data Cleaning
+Perform Exploratory Data Analysis 
+
+4. IMPLEMENTING THE SOLUTION 
+
+
+5. CHALLENGING THE SOLUTION 
+
+6. CONCLUSIONS AND RECOMMENDATIONS 
+
+7. FOLLOW UP QUESTIONS 
+
+
+
+
+A. Reading the data 
+
+```{r}
+# Importing the necessary libraries 
+
+library (tidyverse)
+library(data.table )
+library(devtools)
+library(ggbiplot)
+
+```
+
+```{r}
+# Reading the data 
+data <- fread("http://bit.ly/CarreFourDataset")
+
+```
+Checking the data 
+
+```{r}
+# Checking the first 5 rows 
+head(data)
+
+```
+```{r}
+# Checking the last 5 rows 
+tail(data)
+
+```
+```{r}
+# Checking the size of the data
+dim(data)
+
+```
+This dataset has 1000 rows and 16 columns 
+
+```{r}
+# Statistical Summary 
+summary(data)
+
+```
+
+
+```{r}
+# Checking the data types in the columns 
+
+sapply(data, class)
+
+```
+
+
+B. Data Cleaning 
+```{r}
+# Checking for missing values 
+
+colSums(is.na(data))
+
+```
+There are no missing values in the data
+
+
+```{r}
+# checking for duplicates
+duplicated_rows <- data[duplicated(data),]
+duplicated_rows # there are no duplicates in the data
+
+```
+
+```{r}
+# Checking for Unique values 
+unique_items <- data[!duplicated(data), ]
+unique_items
+
+```
+```{r}
+# Selecting the numerical columns for PCA 
+
+df <- data %>% select_if(is.numeric)
+colnames(df)
+
+```
+The numerical columns we have are Unit price, Quantity, Tax, cogs, gross margin percentage, gross income,  Rating and Total
+
+```{r}
+
+head(df)
+
+```
+
+```{r}
+# selecting needed columns
+
+df2 <- subset(df, select = c("Unit price", "Quantity", "Tax", "cogs", "gross income", "Rating", "Total"))
+colnames(df2)
+
+```
+
+
+C. DIMENSIONALITY REDUCTION WITH PCA 
+```{r}
+# We then pass df to the prcomp()
+# We also set two arguments, center and scale, 
+# to be TRUE then preview our object with summary
+# ---
+# 
+df2.pca <- prcomp(df, center = FALSE, scale. = TRUE)
+summary(df2.pca)
+
+
+
+```
+
+
+```{r}
+
+library(ggbiplot)
+ggbiplot(df2.pca)
+
+```
+
+
+```{r}
+# Adding more detail to the plot, we provide arguments rownames as labels
+# 
+ggbiplot(df2.pca, labels=rownames(df2.pca), obs.scale = 1, var.scale = 1)
+
+```
+
+Based on this graph, we can see that two variables give most of the information about data These two variables could be rating and gross income
+
+
