@@ -1,0 +1,209 @@
+---
+title: "Anomaly Detection"
+author: "Faith Rotich"
+date: "2/6/2022"
+output: html_document
+---
+
+ANOMALY DETECTION
+
+PROBLEM DEFINITION
+a) Specifying the Question
+Identify anomalies in the dataset = fraud detection
+
+b) Defining the metrics for success
+check whether there are any anomalies in the given sales dataset. The objective of this task being fraud detection.
+
+c) Understanding the context
+You are a Data analyst at Carrefour Kenya and are currently undertaking a project that will inform the marketing department on the most relevant marketing strategies that will result in the highest no. of sales (total price including tax). Your project has been divided into four parts where you’ll explore a recent marketing dataset by performing various unsupervised learning techniques and later providing recommendations based on your insights.
+
+d) Recording the Experimental Design
+Define the question, the metric for success, the context, experimental design taken.
+Read and explore the given dataset.
+Identify anomalies in the dataset
+
+e) Relevance of the data
+You have also been requested to check whether there are any anomalies in the given sales dataset. The objective of this task being fraud detection
+
+
+Dataset link - ["http://bit.ly/CarreFourSalesDataset"]
+
+
+
+
+```{R}
+# Installing anomalize package
+# ---
+#install.packages("anomalize")
+```
+
+
+# 1. Loading the required packages.
+
+
+```{r}
+library(anomalize) 
+library(tidyverse) 
+library(tibble)
+library(tibbletime) 
+library(data.table)
+library(dplyr)
+```
+
+
+# 2. Loading and Viewing the dataset
+
+```{r}
+data<- read.csv("http://bit.ly/CarreFourSalesDataset")
+
+```
+
+
+```{r}
+#Viewing the first 5 rows 
+
+head(data) 
+
+```
+The dataset contains 2 columns
+The Sales column shows values of sales and particular dates shows the dates of sales
+
+
+```{r}
+# Viewing the last 5 row s
+tail(data)
+```
+
+
+Checking the dimensions of the dataset.
+```{r}
+# Checking the size of the dataset
+dim(data)
+```
+It has 1000 observations on two variables that is dates and sales 
+
+
+# 3. Data Cleaning 
+
+Checking for missing values.
+
+```{r}
+colSums(is.na(data))
+```
+There are no missing values in the dataset
+
+
+
+Checking the datatypes
+```{r}
+#data structure
+str(data)
+```
+Date column is a string and it needs to be converted to date using as.Date()
+ 
+ 
+ 
+ 
+```{r}
+data$Date <- as.Date(data$Date, format = "%m/%d/%Y")
+data$Date <- sort(data$Date, decreasing = FALSE)
+```
+
+
+
+
+
+#Rechecking the structure to confirm the operation 
+```{r}
+#data structure
+str(data)
+```
+
+# 4. Feature Engineering
+
+```{r}
+### Converting the sales into a tibbletime object
+
+library(timetk)
+
+```
+
+
+
+```{r}
+data$Date <- as.POSIXct(data$Date)
+```
+
+
+# Loading libraries for anomaly detection
+```{r}
+library(tibble)
+library(tibbletime) 
+```
+
+
+# Loading the ggplot2 library for plotting 
+```{r}
+library(ggplot2)
+```
+
+
+
+
+```{r}
+# Using as_tibble function
+data <- as_tibble(data)
+```
+
+
+
+
+# 5.Anomaly Detection.
+
+
+
+```{r}
+# Decomposing 
+
+data %>%
+time_decompose(Sales, method = 'stl', frequency = 'auto', trend = 'auto') %>%
+anomalize(remainder, method = 'gesd', alpha = 0.1, max_anoms = 0.5) %>%
+plot_anomaly_decomposition(ncol = 3, alpha_dots = 0.7)
+```
+
+
+
+```{r}
+
+# Recomposing 
+# Using time_recompose() function to generate bands around the normal levels of observed values for clear observation of the outliers 
+
+data %>%
+time_decompose(Sales, method = 'stl', frequency = 'auto', trend = 'auto') %>%
+anomalize(remainder, method = 'gesd', alpha = 0.1, max_anoms = 0.1) %>%
+time_recompose() %>%
+plot_anomalies(time_recomposed = TRUE, ncol = 3, alpha_dots = 0.5)
+
+
+```
+
+
+Checking the time periods that had anomalies
+
+```{r}
+anomalies = data %>%
+time_decompose(Sales, method = 'stl', frequency = 'auto', trend = 'auto') %>%
+anomalize(remainder, method = 'gesd', alpha = 0.05, max_anoms = 0.1) %>%
+time_recompose() %>%
+filter(anomaly == 'Yes')
+anomalies
+```
+
+# 6. Conclusion
+There are several anomalies in the Carrefour dataset  between the 6th of February 2019 and 30th of March 2019 as shown in the table above
+
+
+# 7. Recommendations
+Carrerfour should review the sales patterns between February and March  and investigate the reason why there were why anomalies between these two months.
+
+
