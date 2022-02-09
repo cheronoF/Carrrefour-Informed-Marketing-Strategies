@@ -1,0 +1,238 @@
+---
+title: "Feauture Selection"
+author: "Faith Rotich"
+date: "2/4/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+# Wk 14 IP - FEATURE SELECTION
+
+1. DEFINING THE QUESTION 
+2. METRICS OF SUCCESS 
+3. EXPERIMENTAL DESIGN 
+4. IMPLEMENTING THE SOLUTION 
+5. CHALLENING THE SOLUTION 
+6. CONCLUSION AND RECOMMENDATION 
+
+1. DEFING THE QUESTION 
+
+a) Problem Statement 
+
+You are a Data analyst at Carrefour Kenya and are currently undertaking a project that will inform the marketing department on the most relevant marketing strategies that will result in the highest no. of sales (total price including tax). Your project has been divided into four parts where you'll explore a recent marketing dataset by performing various unsupervised learning techniques and later providing recommendations based on your insights.
+
+Part 2: Feature Selection
+
+This section requires you to perform feature selection through the use of the unsupervised learning methods learned earlier this week. You will be required to perform your analysis and provide insights on the features that contribute the most information to the dataset.
+
+2. METRICS OF SUCCESS 
+
+- Successfully carrying out feature selection using unsupervised learning algorithms 
+
+
+# 1. Loading the libraries 
+
+```{r}
+
+# Loading the library
+
+library(caret)
+library(corrplot)
+library(data.table)
+library(tidyverse)
+library(dplyr)
+
+```
+
+
+# 2. Reading and Viewing the data
+
+```{r}
+# Reading the data 
+data <- fread("http://bit.ly/CarreFourDataset")
+
+```
+
+
+```{r}
+# Viewing the first 5 rows 
+head(data)
+
+```
+
+
+```{r}
+# Viewing the last 5 rows 
+tail(data)
+
+```
+
+
+```{r}
+# Viewing the size of the data 
+dim(data)
+
+```
+
+
+```{r}
+# Statistical Summary 
+
+summary(data)
+
+```
+
+```{r}
+# Checking data types 
+sapply(data, class)
+
+```
+
+
+# 3. Data Cleaning 
+```{r}
+# Checking for missing values 
+
+colSums(is.na(data))
+
+```
+There are no missing values in the data
+
+
+```{R}
+#Checking for Duplicates
+duplicated_rows <- data[duplicated(data),]
+
+duplicated_rows 
+
+```
+There are no duplicated rows
+
+
+
+``` {r}
+# showing these unique items and assigning to a variable unique_items below
+unique_items <- data[!duplicated(data), ]
+unique_items
+```
+
+```{r}
+# selecting the numerical data columns
+df <- data %>% select_if(is.numeric)
+
+
+# selecting needed columns
+df1 <- subset(df, select = c("Unit price", "Quantity", "Tax", "cogs", "gross income", "Rating", "Total"))
+colnames(df1)
+```
+
+# Feature Selection in Unsupervised Learning
+## Using filter methods
+
+```{R}
+
+colnames(df1)
+
+```
+
+```{R}
+# Calculating the correlation matrix
+correlationMatrix <- cor(df1)
+
+
+# Find attributes that are highly correlated
+highlyCorrelated <- findCorrelation(correlationMatrix, cutoff=0.75)
+highlyCorrelated
+
+
+```
+Columns 4,7 and 3 are highly correlated
+
+
+```{R}
+# Removing Redundant Features 
+df2<-df1[-highlyCorrelated]
+```
+
+
+
+```{R}
+# Performing our graphical comparison
+par(mfrow = c(1, 2))
+corrplot(correlationMatrix, order = "hclust")
+corrplot(cor(df2), order = "hclust")
+```
+# Numericals
+```{r}
+library("dplyr")
+numerical<-select_if(df1,is.numeric)
+numerical
+
+```
+
+```{r}
+# Selecting non numeric columns
+head(df1)
+# Caret package for dummy variables
+library(caret)
+# Encoding using Dummy variables and excluding unique ID and date time data
+dums<-dummyVars("~.",data=df1[,c(-1,-9,-10)])
+dums
+# Encoding.
+new_df<-data.frame(predict(dums,newdata =df1[,c(-1,-9,-10)]))
+new_df
+```
+
+
+```{r}
+# Dimensionality Reduction technique
+# Will use PCA so as to understand the variance displayed by each feature
+reduced_df<-prcomp(new_df,center = TRUE)
+# Since prcomp uses single value decomposition that tests each points covariance and correlation to each other.
+```
+
+
+```{r}
+# Using the Standard Scalar of reduced_df 
+
+df1 = scale(df1)
+
+```
+
+
+```{r}
+reduced_df$sdev
+# Checking the standard deviation of each PC
+plot(reduced_df$sdev,main="Standard deviation of each Principal Component",ylab = "Standard Deviation",xlab = "Princial Components",type = "bar",col="red")
+```
+The first 2 Principal components have a significant standard deviation in our dataset
+
+```{r}
+
+# install.packages("factoextra")
+
+```
+
+
+
+
+```{r}
+library(factoextra)
+# Getting the sum of square distances from the projected point in our data
+
+
+eigen_values<-get_eigenvalue(reduced_df)
+eigen_values
+
+```
+PCA 1 also indicated by Dim.1 shows that it explaind 99.9% variance in the data however this is may not be an accurate result
+
